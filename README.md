@@ -62,6 +62,8 @@
 
 ## 🤖 ESP32 固件要求
 
+> 📘 **固件开发请直接照做 [FIRMWARE_PROTOCOL.md](FIRMWARE_PROTOCOL.md)** —— 里面是完整的 MQTT 协议约定：主题、状态字段、控制指令、协议 key 对照表、处理流程伪代码，照抄字符和命令即可。
+
 固件负责：读取 SW3518S 寄存器 → 组装 JSON → 发布到 `{prefix}/state`；订阅 `{prefix}/cmd` 执行开关与协议控制指令。
 
 ### MQTT 主题约定
@@ -171,6 +173,7 @@
 ### v1.0.4（2026-09-15）
 
 - 新增：PD / QC / SCP / VOOC / FCP 协议启用开关（`set_proto` 指令 + `proto_en` 状态回读）
+- 新增：固件开发协议文档 `FIRMWARE_PROTOCOL.md`
 - 修正：`codeowners` 改为 `@fuhuao`
 
 ### v1.0.3（2026-09-15）
