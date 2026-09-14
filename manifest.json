@@ -1,11 +1,11 @@
 {
   "domain": "sw3518s_charger",
   "name": "SW3518S PD快充充电器",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "config_flow": true,
   "documentation": "https://github.com/fuhuao/sw3518s_charger",
   "requirements": [],
   "dependencies": ["mqtt"],
   "iot_class": "local_push",
-  "codeowners": ["@fu-huao"]
+  "codeowners": ["@fuhuao"]
 }
