@@ -5,6 +5,7 @@
 ![iot_class](https://img.shields.io/badge/iot_class-local_push-blue)
 ![HA](https://img.shields.io/badge/Home%20Assistant-2024.4%2B-green)
 ![hacs](https://img.shields.io/badge/HACS-1.30.0-orange)
+![version](https://img.shields.io/badge/version-v1.0.3-blue)
 
 ---
 
@@ -107,7 +108,7 @@
 ### 方式一：HACS（推荐）
 
 1. HACS → 右上角「⋮」→ **自定义仓库**；
-2. 填入你的 GitHub 仓库地址，类别选择 **集成**；
+2. 填入仓库地址 **`https://github.com/fuhuao/sw3518s_charger`**，类别选择 **集成**；
 3. 添加后 HACS 商店即可搜索到 **SW3518S PD快充充电器**，点击安装；
 4. **重启 Home Assistant**。
 
@@ -136,8 +137,34 @@
 | SW3518S C口电流 | sensor | A | current |
 | SW3518S 输出功率 | sensor | W | power |
 | SW3518S 芯片温度 | sensor | ℃ | temperature |
-| SW3518S 协商快充协议 | text_sensor | — | — |
+| SW3518S 协商快充协议 | sensor | — | — |
 | SW3518S 快充输出总开关 | switch | — | — |
+
+> 说明：「协商快充协议」为文本型 sensor（无单位），显示当前 PD/QC/SCP 等协议名称。
+
+---
+
+## 🔄 更新
+
+1. HACS → 商店 → **SW3518S PD快充充电器**；
+2. 有新版时点 **更新**（HACS 会比较 GitHub Release tag）；
+3. 更新完成后 **重启 Home Assistant**。
+
+> 作者发布新版本流程：修改代码推送 GitHub → 创建新 Release（tag 递增，如 `v1.0.4`）→ HACS 即提示更新。
+
+---
+
+## 📜 更新日志
+
+### v1.0.3（2026-09-15）
+
+- 修复：移除 `text_sensor` 平台（HA 2026.9 已移除内置 text_sensor 组件，协议实体并入 `sensor` 平台）
+- 修复：实体改用平台标准基类 `SensorEntity` / `SwitchEntity`，确保状态正常显示
+- 新增：「协商快充协议」传感器实体
+
+### v1.0.2 / v1.0.1
+
+- 接入 HACS 自定义仓库，完善 `hacs.json`（`content_in_root`）
 
 ---
 
