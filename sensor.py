@@ -1,4 +1,4 @@
-"""SW3518S 传感器实体（输出电压/电流/功率/芯片温度）."""
+"""SW3518S 传感器实体（输出电压/电流/功率/芯片温度/快充协议）."""
 from __future__ import annotations
 
 import json
