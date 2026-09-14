@@ -7,7 +7,7 @@ import logging
 from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.entity import SwitchEntity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DEVICE_MANUFACTURER, DEVICE_MODEL, DEVICE_NAME, DOMAIN
@@ -29,7 +29,7 @@ async def async_setup_entry(
     )
 
 
-class SW3518Switch(Entity):
+class SW3518Switch(SwitchEntity):
     """监听状态主题、通过命令主题控制 ESP32 输出开关."""
 
     _attr_should_poll = False

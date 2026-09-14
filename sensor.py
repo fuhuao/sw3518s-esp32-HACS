@@ -14,7 +14,7 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.entity import SensorEntity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DEVICE_MANUFACTURER, DEVICE_MODEL, DEVICE_NAME, DOMAIN
@@ -48,11 +48,14 @@ async def async_setup_entry(
             "芯片温度", "temp_c", UnitOfTemperature.CELSIUS,
             "temperature", state_topic,
         ),
+        SW3518Sensor(
+            "协商快充协议", "proto_name", None, None, state_topic,
+        ),
     ]
     async_add_entities(sensors)
 
 
-class SW3518Sensor(Entity):
+class SW3518Sensor(SensorEntity):
     """监听 MQTT JSON 状态主题的 SW3518S 传感器."""
 
     _attr_should_poll = False
@@ -61,8 +64,8 @@ class SW3518Sensor(Entity):
         self,
         name: str,
         json_key: str,
-        unit: str,
-        device_class: str,
+        unit: str | None,
+        device_class: str | None,
         state_topic: str,
         conv: Callable[[object], object] | None = None,
     ) -> None:
