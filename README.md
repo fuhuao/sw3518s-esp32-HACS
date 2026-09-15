@@ -5,7 +5,7 @@
 ![iot_class](https://img.shields.io/badge/iot_class-local_push-blue)
 ![HA](https://img.shields.io/badge/Home%20Assistant-2024.4%2B-green)
 ![hacs](https://img.shields.io/badge/HACS-1.30.0-orange)
-![version](https://img.shields.io/badge/version-v1.0.7-blue)
+![version](https://img.shields.io/badge/version-v1.0.8-blue)
 
 ---
 
@@ -43,7 +43,7 @@
 
 | 组件 | 说明 |
 |---|---|
-| ESP32模块 开发板 | 任意带 WiFi 的 ESP32模块 |
+| ESP32-S3 开发板 | 任意带 WiFi 的 ESP32-S3 |
 | SW3518S 快充模块 | 成品功率板（推荐）或按 datasheet 自制 |
 | 直流电源 | 12–24V（供电给 SW3518S 功率级） |
 | 手机/设备 | 用于触发快充测试 |
@@ -131,7 +131,7 @@
 ### 方式一：HACS（推荐）
 
 1. HACS → 右上角「⋮」→ **自定义仓库**；
-2. 填入仓库地址 **`https://github.com/fuhuao/sw3518s_charger`**，类别选择 **集成**；
+2. 填入仓库地址 **`https://github.com/fuhuao/sw3518s-esp32-HACS`**，类别选择 **集成**；
 3. 添加后 HACS 商店即可搜索到 **SW3518S PD快充充电器**，点击安装；
 4. **重启 Home Assistant**。
 
@@ -185,6 +185,11 @@
 ---
 
 ## 📜 更新日志
+
+### v1.0.8（2026-09-15）
+
+- 仓库更名为 **`fuhuao/sw3518s-esp32-HACS`**，文档与安装链接全部更新为新地址
+- 功能无变化；若 HACS 仍关联旧地址，请删除旧自定义仓库后重新添加新地址
 
 ### v1.0.7（2026-09-15）
 
