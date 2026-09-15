@@ -6,6 +6,7 @@ import logging
 from typing import Callable
 
 from homeassistant.components import mqtt
+from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     UnitOfElectricCurrent,
@@ -14,10 +15,16 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.components.sensor import SensorEntity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DEVICE_MANUFACTURER, DEVICE_MODEL, DEVICE_NAME, DOMAIN
+from .const import (
+    DEVICE_MANUFACTURER,
+    DEVICE_MODEL,
+    DOMAIN,
+    device_identifier,
+    device_name,
+    entity_unique_id,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,22 +41,22 @@ async def async_setup_entry(
     sensors = [
         SW3518Sensor(
             "输出电压", "vout_mv", UnitOfElectricPotential.VOLT,
-            "voltage", state_topic, lambda v: float(v) / 1000,
+            "voltage", state_topic, lambda v: float(v) / 1000, prefix,
         ),
         SW3518Sensor(
             "C口电流", "iout_c_ma", UnitOfElectricCurrent.AMPERE,
-            "current", state_topic, lambda v: float(v) / 1000,
+            "current", state_topic, lambda v: float(v) / 1000, prefix,
         ),
         SW3518Sensor(
             "输出功率", "power_w", UnitOfPower.WATT,
-            "power", state_topic,
+            "power", state_topic, None, prefix,
         ),
         SW3518Sensor(
             "芯片温度", "temp_c", UnitOfTemperature.CELSIUS,
-            "temperature", state_topic,
+            "temperature", state_topic, None, prefix,
         ),
         SW3518Sensor(
-            "协商快充协议", "proto_name", None, None, state_topic,
+            "协商快充协议", "proto_name", None, None, state_topic, None, prefix,
         ),
     ]
     async_add_entities(sensors)
@@ -67,7 +74,8 @@ class SW3518Sensor(SensorEntity):
         unit: str | None,
         device_class: str | None,
         state_topic: str,
-        conv: Callable[[object], object] | None = None,
+        conv: Callable[[object], object] | None,
+        prefix: str,
     ) -> None:
         self._attr_name = f"SW3518S {name}"
         self._json_key = json_key
@@ -76,14 +84,15 @@ class SW3518Sensor(SensorEntity):
         self._state_topic = state_topic
         self._conv = conv or (lambda x: x)
         self._attr_native_value = None
-        self._attr_unique_id = f"sw3518s_charger_{json_key}"
+        self._prefix = prefix
+        self._attr_unique_id = entity_unique_id(prefix, json_key)
 
     @property
     def device_info(self):
-        """统一归属到同一个设备卡片."""
+        """归属到对应序号设备卡片（多模块自动区分）."""
         return {
-            "identifiers": {(DOMAIN, "sw3518s_charger_01")},
-            "name": DEVICE_NAME,
+            "identifiers": {device_identifier(self._prefix)},
+            "name": device_name(self._prefix),
             "manufacturer": DEVICE_MANUFACTURER,
             "model": DEVICE_MODEL,
         }

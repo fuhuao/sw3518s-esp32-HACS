@@ -8,6 +8,12 @@ from homeassistant import config_entries
 from .const import DEFAULT_MQTT_PREFIX, DOMAIN
 
 
+def _device_suffix(prefix: str) -> str:
+    """从前缀提取设备序号（如 home/sw3518s_charger/2 -> 2；默认前缀 -> 空串）."""
+    tail = prefix.rstrip("/").rsplit("/", 1)[-1]
+    return tail.removeprefix("sw3518s_charger").strip("_")
+
+
 class SW3518SConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """SW3518S 快充充电器配置流."""
 
@@ -21,8 +27,12 @@ class SW3518SConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if not prefix:
                 errors["mqtt_topic_prefix"] = "不能为空"
             else:
+                await self.async_set_unique_id(prefix)
+                self._abort_if_unique_id_configured()
+                suffix = _device_suffix(prefix)
+                title = "SW3518S快充充电器" + (f"-{suffix}" if suffix else "")
                 return self.async_create_entry(
-                    title="SW3518S快充充电器",
+                    title=title,
                     data={"mqtt_topic_prefix": prefix},
                 )
 
@@ -36,4 +46,15 @@ class SW3518SConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=errors,
+        )
+
+    async def async_step_discovery(self, discovery_info):
+        """自动发现新模块：收到 {prefix}/N/state 广播后由入口创建."""
+        prefix = str(discovery_info["mqtt_topic_prefix"]).strip().rstrip("/")
+        await self.async_set_unique_id(prefix)
+        self._abort_if_unique_id_configured()
+        suffix = _device_suffix(prefix)
+        return self.async_create_entry(
+            title="SW3518S快充充电器" + (f"-{suffix}" if suffix else ""),
+            data={"mqtt_topic_prefix": prefix},
         )

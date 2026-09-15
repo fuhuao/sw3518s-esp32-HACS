@@ -5,12 +5,19 @@ import json
 import logging
 
 from homeassistant.components import mqtt
+from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.components.switch import SwitchEntity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DEVICE_MANUFACTURER, DEVICE_MODEL, DEVICE_NAME, DOMAIN
+from .const import (
+    DEVICE_MANUFACTURER,
+    DEVICE_MODEL,
+    DOMAIN,
+    device_identifier,
+    device_name,
+    entity_unique_id,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,9 +40,11 @@ async def async_setup_entry(
     prefix: str = entry.data["mqtt_topic_prefix"]
     state_topic = f"{prefix}/state"
     cmd_topic = f"{prefix}/cmd"
-    switches = [SW3518Switch("快充输出总开关", "output_en", state_topic, cmd_topic)]
+    switches = [
+        SW3518Switch("快充输出总开关", "output_en", state_topic, cmd_topic, prefix)
+    ]
     switches.extend(
-        SW3518ProtoSwitch(name, key, state_topic, cmd_topic)
+        SW3518ProtoSwitch(name, key, state_topic, cmd_topic, prefix)
         for name, key in PROTOCOLS
     )
     async_add_entities(switches)
@@ -46,20 +55,23 @@ class SW3518Switch(SwitchEntity):
 
     _attr_should_poll = False
 
-    def __init__(self, name: str, json_key: str, state_topic: str, cmd_topic: str) -> None:
+    def __init__(
+        self, name: str, json_key: str, state_topic: str, cmd_topic: str, prefix: str
+    ) -> None:
         self._attr_name = f"SW3518S {name}"
         self._json_key = json_key
         self._state_topic = state_topic
         self._cmd_topic = cmd_topic
         self._attr_is_on = False
-        self._attr_unique_id = "sw3518s_charger_output_switch"
+        self._prefix = prefix
+        self._attr_unique_id = entity_unique_id(prefix, "output_switch")
 
     @property
     def device_info(self):
-        """统一归属到同一个设备卡片."""
+        """归属到对应序号设备卡片（多模块自动区分）."""
         return {
-            "identifiers": {(DOMAIN, "sw3518s_charger_01")},
-            "name": DEVICE_NAME,
+            "identifiers": {device_identifier(self._prefix)},
+            "name": device_name(self._prefix),
             "manufacturer": DEVICE_MANUFACTURER,
             "model": DEVICE_MODEL,
         }
@@ -93,20 +105,23 @@ class SW3518ProtoSwitch(SwitchEntity):
 
     _attr_should_poll = False
 
-    def __init__(self, name: str, proto_key: str, state_topic: str, cmd_topic: str) -> None:
+    def __init__(
+        self, name: str, proto_key: str, state_topic: str, cmd_topic: str, prefix: str
+    ) -> None:
         self._attr_name = f"SW3518S {name}"
         self._proto_key = proto_key
         self._state_topic = state_topic
         self._cmd_topic = cmd_topic
         self._attr_is_on = True  # 默认启用
-        self._attr_unique_id = f"sw3518s_charger_proto_{proto_key}"
+        self._prefix = prefix
+        self._attr_unique_id = entity_unique_id(prefix, f"proto_{proto_key}")
 
     @property
     def device_info(self):
-        """统一归属到同一个设备卡片."""
+        """归属到对应序号设备卡片（多模块自动区分）."""
         return {
-            "identifiers": {(DOMAIN, "sw3518s_charger_01")},
-            "name": DEVICE_NAME,
+            "identifiers": {device_identifier(self._prefix)},
+            "name": device_name(self._prefix),
             "manufacturer": DEVICE_MANUFACTURER,
             "model": DEVICE_MODEL,
         }
