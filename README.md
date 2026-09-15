@@ -5,7 +5,7 @@
 ![iot_class](https://img.shields.io/badge/iot_class-local_push-blue)
 ![HA](https://img.shields.io/badge/Home%20Assistant-2024.4%2B-green)
 ![hacs](https://img.shields.io/badge/HACS-1.30.0-orange)
-![version](https://img.shields.io/badge/version-v1.0.5-blue)
+![version](https://img.shields.io/badge/version-v1.0.6-blue)
 
 ---
 
@@ -185,6 +185,10 @@
 ---
 
 ## 📜 更新日志
+
+### v1.0.6（2026-09-15）
+
+- 修复：自动发现按**基前缀**监听 `{基前缀}/+/state`——此前若配置前缀带序号（如 `home/sw3518s_charger/01`），只会监听 `.../01/+/state`，导致发布 `home/sw3518s_charger/03/state` 无法被发现；现在任意配置项都能发现所有兄弟模块（`/1`、`/2`、`/3` …）
 
 ### v1.0.5（2026-09-15）
 
