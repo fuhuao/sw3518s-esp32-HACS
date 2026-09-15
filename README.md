@@ -5,7 +5,7 @@
 ![iot_class](https://img.shields.io/badge/iot_class-local_push-blue)
 ![HA](https://img.shields.io/badge/Home%20Assistant-2024.4%2B-green)
 ![hacs](https://img.shields.io/badge/HACS-1.30.0-orange)
-![version](https://img.shields.io/badge/version-v1.0.6-blue)
+![version](https://img.shields.io/badge/version-v1.0.7-blue)
 
 ---
 
@@ -185,6 +185,10 @@
 ---
 
 ## 📜 更新日志
+
+### v1.0.7（2026-09-15）
+
+- 改进：自动发现的去重改为 **30 秒窗口**——删除设备/配置项后**无需重启 HA**，重新发布 `{基前缀}/N/state` 即可再次自动发现（旧版需重启 HA 才会清空内存记录）
 
 ### v1.0.6（2026-09-15）
 

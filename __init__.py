@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import time
 
 from homeassistant.components import mqtt
 from homeassistant.config_entries import SOURCE_DISCOVERY, ConfigEntry
@@ -16,6 +17,8 @@ PLATFORMS = ["sensor", "switch"]
 # hass.data[DOMAIN] 内部键（不会与 entry.entry_id 冲突）
 _DISCOVERY_UNSUBS = "_discovery_unsubs"
 _DISCOVERED = "_discovered_prefixes"
+# 同一前缀的去重窗口（秒）：防止短时间内重复创建，超时后允许重新发现
+_DEDUP_WINDOW = 30.0
 
 
 def _base_prefix(prefix: str) -> str:
@@ -62,16 +65,18 @@ async def _start_discovery(hass: HomeAssistant, entry: ConfigEntry) -> None:
         dev_prefix = topic.rsplit("/state", 1)[0]
         if not dev_prefix or dev_prefix == prefix:
             return
-        # 已登记过的前缀（含正在创建中）直接忽略
         hass.data.setdefault(DOMAIN, {})
-        marked = hass.data[DOMAIN].setdefault(_DISCOVERED, set())
-        if dev_prefix in marked:
-            return
-        marked.add(dev_prefix)
-        # 已存在同名配置项则忽略
+        marked: dict = hass.data[DOMAIN].setdefault(_DISCOVERED, {})
+        # 已存在同名配置项（手动添加或已自动创建）则忽略
         for existing in hass.config_entries.async_entries(DOMAIN):
             if existing.data.get("mqtt_topic_prefix") == dev_prefix:
                 return
+        # 同一前缀在去重窗口内只触发一次创建流程（防并发重复）；
+        # 窗口过期后允许再次发现——配置项被删除后无需重启 HA 即可重新自动发现
+        now = time.monotonic()
+        if now - marked.get(dev_prefix, 0.0) < _DEDUP_WINDOW:
+            return
+        marked[dev_prefix] = now
         _LOGGER.info("SW3518S 自动发现新模块: %s", dev_prefix)
         hass.async_create_task(_create_entry_for_prefix(hass, dev_prefix))
 
