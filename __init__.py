@@ -18,6 +18,19 @@ _DISCOVERY_UNSUBS = "_discovery_unsubs"
 _DISCOVERED = "_discovered_prefixes"
 
 
+def _base_prefix(prefix: str) -> str:
+    """推导自动发现的基前缀.
+
+    多模块约定：模块 N 的主题前缀为 {基前缀}/N（如 home/sw3518s_charger/2）。
+    若配置前缀末尾是纯数字序号，则基前缀为其上一层；否则视为基前缀本身。
+    """
+    prefix = prefix.rstrip("/")
+    parts = prefix.split("/")
+    if len(parts) > 1 and parts[-1].isdigit():
+        return "/".join(parts[:-1])
+    return prefix
+
+
 async def _create_entry_for_prefix(hass: HomeAssistant, prefix: str) -> None:
     """为自动发现的主题前缀创建一个新的配置项."""
     try:
@@ -31,14 +44,16 @@ async def _create_entry_for_prefix(hass: HomeAssistant, prefix: str) -> None:
 
 
 async def _start_discovery(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """订阅广播主题 {prefix}/+/state，自动发现新的 SW3518S 模块.
+    """订阅广播主题 {基前缀}/+/state，自动发现新的 SW3518S 模块.
 
-    多模块约定：模块 N 的主题前缀为 {prefix}/N（如 home/sw3518s_charger/2），
-    其状态主题为 {prefix}/N/state。本集成监听 {prefix}/+/state，
+    多模块约定：模块 N 的主题前缀为 {基前缀}/N（如 home/sw3518s_charger/3），
+    其状态主题为 {基前缀}/N/state。本集成监听 {基前缀}/+/state，
     检测到未登记的前缀时自动创建对应的配置项。
+    无论配置项本身填的是基前缀还是带序号的 {基前缀}/N，都按基前缀监听，
+    这样任意配置项都能发现所有兄弟模块（/1、/2、/3 …）。
     """
     prefix: str = entry.data["mqtt_topic_prefix"]
-    discovery_topic = f"{prefix}/+/state"
+    discovery_topic = f"{_base_prefix(prefix)}/+/state"
 
     @callback
     async def _on_message(msg) -> None:

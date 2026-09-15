@@ -1,7 +1,7 @@
 {
   "domain": "sw3518s_charger",
   "name": "SW3518S PD快充充电器",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "config_flow": true,
   "documentation": "https://github.com/fuhuao/sw3518s_charger",
   "requirements": [],
