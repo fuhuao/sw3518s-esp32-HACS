@@ -31,6 +31,23 @@ home/sw3518s_charger/state     # 发布状态
 home/sw3518s_charger/cmd       # 订阅指令
 ```
 
+### 2.1 多模块主题约定（v1.0.5+ 自动发现）
+
+有多个 SW3518S 模块时，每个模块使用 **`{基前缀}/N`** 作为自己的主题前缀，HA 会自动发现并创建独立设备（设备名「SW3518S PD快充充电器-N」）：
+
+| 模块 | 主题前缀 `{prefix}` | 发布 state | 订阅 cmd |
+|---|---|---|---|
+| 模块 1 | `home/sw3518s_charger/1` | `home/sw3518s_charger/1/state` | `home/sw3518s_charger/1/cmd` |
+| 模块 2 | `home/sw3518s_charger/2` | `home/sw3518s_charger/2/state` | `home/sw3518s_charger/2/cmd` |
+| … | … | … | … |
+
+要点：
+
+- 基前缀默认 `home/sw3518s_charger`；HA 侧只需添加一次集成（任何前缀均可，推荐基前缀）；
+- 固件只需把 `{prefix}` 换成自己的 `home/sw3518s_charger/N`，其余所有约定（§3 字段、§4 指令）完全不变；
+- **Client ID 必须唯一**（如 `esp32_sw3518s_01` / `esp32_sw3518s_02`），避免 broker 互踢；
+- 单模块用户可继续使用 `home/sw3518s_charger`（不加 `/N`），HA 兼容两种方式。
+
 ---
 
 ## 3. 状态上报 `{prefix}/state`
@@ -191,11 +208,12 @@ publish_state():          # 变化时或每 1s
 
 ## 6. 兼容性矩阵
 
-| 集成版本 | state 必填 | proto_en | set_proto |
-|---|---|---|---|
-| v1.0.0 – v1.0.2 | vout_mv / iout_c_ma / power_w / output_en | 不支持 | 不支持 |
-| v1.0.3 | 同上 | 可选（被忽略） | 不支持 |
-| **v1.0.4（当前）** | 同上 | 推荐 | 支持 |
+| 集成版本 | state 必填 | proto_en | set_proto | 多模块自动发现 |
+|---|---|---|---|---|
+| v1.0.0 – v1.0.2 | vout_mv / iout_c_ma / power_w / output_en | 不支持 | 不支持 | 不支持 |
+| v1.0.3 | 同上 | 可选（被忽略） | 不支持 | 不支持 |
+| v1.0.4 | 同上 | 推荐 | 支持 | 不支持 |
+| **v1.0.5（当前）** | 同上 | 推荐 | 支持 | ✅ 支持（`{基前缀}/N` 前缀） |
 
 ---
 

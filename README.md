@@ -5,7 +5,7 @@
 ![iot_class](https://img.shields.io/badge/iot_class-local_push-blue)
 ![HA](https://img.shields.io/badge/Home%20Assistant-2024.4%2B-green)
 ![hacs](https://img.shields.io/badge/HACS-1.30.0-orange)
-![version](https://img.shields.io/badge/version-v1.0.4-blue)
+![version](https://img.shields.io/badge/version-v1.0.5-blue)
 
 ---
 
@@ -16,6 +16,7 @@
 - **协议开关**：可单独启用/禁用 PD / QC / SCP / VOOC / FCP 快充协议（需 ESP32 固件配合）
 - **远程控制**：一键开关快充输出（HA 下发 MQTT 指令 → ESP32-S3 → SW3518S）
 - **统一设备卡片**：所有实体自动归属到同一个「SW3518S PD快充充电器」设备下
+- **多模块自动发现**：接入多个 SW3518S 模块时，只要 ESP32 按 `{前缀}/N` 上报，HA 自动创建对应设备，无需手动添加（v1.0.5+）
 - **图形化配置**：添加集成时只需填写 MQTT 主题前缀，无需手写 YAML
 - **HACS 支持**：可通过自定义仓库一键安装与升级
 
@@ -72,6 +73,19 @@
 |---|---|---|
 | `home/sw3518s_charger/state` | ESP32 → HA | 状态上报 JSON |
 | `home/sw3518s_charger/cmd` | HA → ESP32 | 控制指令 JSON |
+
+### 多模块主题约定（v1.0.5+ 自动发现）
+
+有多个 SW3518S 模块时，每个模块在 `{基前缀}/N` 下上报，HA 会自动发现并创建独立设备：
+
+| 模块 | 主题前缀 | state | cmd |
+|---|---|---|---|
+| 模块 1 | `home/sw3518s_charger/1` | `home/sw3518s_charger/1/state` | `home/sw3518s_charger/1/cmd` |
+| 模块 2 | `home/sw3518s_charger/2` | `home/sw3518s_charger/2/state` | `home/sw3518s_charger/2/cmd` |
+| … | … | … | … |
+
+- 集成（任意一个配置项）会自动订阅 `{基前缀}/+/state` 广播，检测到新前缀即自动创建设备「SW3518S PD快充充电器-N」；
+- 单模块用户保持原 `home/sw3518s_charger/state` 用法不变，两种方式可共存。
 
 ### 状态 JSON 字段（字段名必须严格一致）
 
@@ -136,6 +150,8 @@
 3. 填写 **MQTT 主题前缀**（默认 `home/sw3518s_charger`，需与 ESP32 固件一致）；
 4. 完成。实体自动出现在设备「SW3518S PD快充充电器」下。
 
+> **多模块（v1.0.5+）**：只需添加一次，后续模块按 `{前缀}/N/state` 上报即自动发现并创建独立设备卡片，无需再次手动添加。
+
 ---
 
 ## 📊 实体列表
@@ -169,6 +185,12 @@
 ---
 
 ## 📜 更新日志
+
+### v1.0.5（2026-09-15）
+
+- 新增：**多模块自动发现** —— 订阅 `{前缀}/+/state` 广播，检测到新模块自动创建独立设备（设备名带序号，实体互不冲突）
+- 改进：设备标识与实体 unique_id 按主题前缀派生，支持多个 SW3518S 模块并存
+- 兼容：单模块（默认前缀）用法与实体 ID 完全不变
 
 ### v1.0.4（2026-09-15）
 
@@ -231,6 +253,7 @@ automation:
 | 数值不更新 | 用 MQTT 工具（如 MQTT Explorer）订阅 `state` 主题，确认 ESP32 是否上报、JSON 字段名是否匹配 |
 | 开关无法控制 | 确认 ESP32 订阅了 `cmd` 主题并实现 `output_on/off`、`set_proto` 解析 |
 | 协议开关无效 | 确认 ESP32 固件实现了 `set_proto` 指令并在 `state` 上报 `proto_en`；不同充电器可能不支持全部协议 |
+| 第二个模块没出现 | 确认它发布到 `home/sw3518s_charger/2/state`（`{基前缀}/N/state`），重启 HA 或等自动发现广播；检查 HA 日志是否提示「自动发现新模块」 |
 | 想指定 9V/12V/20V | 不支持。PD 电压由 SW3518S 硬件与手机协商决定 |
 
 ---
