@@ -1,4 +1,4 @@
-"""SW3518S 传感器实体（输出电压/电流/功率/芯片温度/快充协议）."""
+"""SW3518S 传感器实体（输出电压/电流/功率/芯片温度/快充协议/电量统计）."""
 from __future__ import annotations
 
 import json
@@ -11,6 +11,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
+    UnitOfEnergy,
     UnitOfPower,
     UnitOfTemperature,
 )
@@ -61,6 +62,22 @@ async def async_setup_entry(
         ),
         SW3518Sensor(
             "协商快充协议", "proto_name", None, None, state_topic, None, prefix,
+        ),
+        SW3518Sensor(
+            "总累计电量", "energy_total_wh", UnitOfEnergy.WATT_HOUR,
+            "energy", state_topic, None, prefix,
+        ),
+        SW3518Sensor(
+            "今日电量", "energy_today_wh", UnitOfEnergy.WATT_HOUR,
+            "energy", state_topic, None, prefix,
+        ),
+        SW3518Sensor(
+            "本小时电量", "energy_hour_wh", UnitOfEnergy.WATT_HOUR,
+            "energy", state_topic, None, prefix,
+        ),
+        SW3518Sensor(
+            "本次会话电量", "energy_session_wh", UnitOfEnergy.WATT_HOUR,
+            "energy", state_topic, None, prefix,
         ),
     ]
     async_add_entities(sensors)
