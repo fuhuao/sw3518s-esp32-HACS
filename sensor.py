@@ -1,4 +1,4 @@
-"""SW3518S 传感器实体（输出电压/电流/功率/芯片温度/快充协议）."""
+"""SW3518S 传感器实体（输出电压/电流/功率/芯片温度/快充协议/电量统计）."""
 from __future__ import annotations
 
 import json
@@ -6,7 +6,7 @@ import logging
 from typing import Callable
 
 from homeassistant.components import mqtt
-from homeassistant.components.sensor import SensorEntity, SensorStateClass
+from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     UnitOfElectricCurrent,
@@ -69,7 +69,7 @@ async def async_setup_entry(
         ),
         SW3518Sensor(
             "总累计电量", "energy_total_wh", UnitOfEnergy.WATT_HOUR,
-            "energy", state_topic, None, prefix, total=True,
+            "energy", state_topic, None, prefix,
         ),
         SW3518Sensor(
             "今日电量", "energy_today_wh", UnitOfEnergy.WATT_HOUR,
@@ -101,7 +101,6 @@ class SW3518Sensor(SensorEntity):
         state_topic: str,
         conv: Callable[[object], object] | None,
         prefix: str,
-        total: bool = False,
     ) -> None:
         self._attr_name = f"SW3518S {name}"
         self._json_key = json_key
@@ -112,12 +111,9 @@ class SW3518Sensor(SensorEntity):
         self._attr_native_value = None
         self._prefix = prefix
         self._attr_unique_id = entity_unique_id(prefix, json_key)
-        if device_class == "energy":
-            self._attr_state_class = SensorStateClass.TOTAL_INCREASING if total else SensorStateClass.TOTAL
 
     @property
     def device_info(self):
-        """归属到对应序号设备卡片（多模块自动区分）."""
         return {
             "identifiers": {device_identifier(self._prefix)},
             "name": device_name(self._prefix),
