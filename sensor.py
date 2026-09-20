@@ -6,11 +6,12 @@ import logging
 from typing import Callable
 
 from homeassistant.components import mqtt
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
+    UnitOfEnergy,
     UnitOfPower,
     UnitOfTemperature,
 )
@@ -48,6 +49,14 @@ async def async_setup_entry(
             "current", state_topic, lambda v: float(v) / 1000, prefix,
         ),
         SW3518Sensor(
+            "A口电流", "iout_a_ma", UnitOfElectricCurrent.AMPERE,
+            "current", state_topic, lambda v: float(v) / 1000, prefix,
+        ),
+        SW3518Sensor(
+            "输入电压", "vin_mv", UnitOfElectricPotential.VOLT,
+            "voltage", state_topic, lambda v: float(v) / 1000, prefix,
+        ),
+        SW3518Sensor(
             "输出功率", "power_w", UnitOfPower.WATT,
             "power", state_topic, None, prefix,
         ),
@@ -57,6 +66,22 @@ async def async_setup_entry(
         ),
         SW3518Sensor(
             "协商快充协议", "proto_name", None, None, state_topic, None, prefix,
+        ),
+        SW3518Sensor(
+            "总累计电量", "energy_total_wh", UnitOfEnergy.WATT_HOUR,
+            "energy", state_topic, None, prefix, total=True,
+        ),
+        SW3518Sensor(
+            "今日电量", "energy_today_wh", UnitOfEnergy.WATT_HOUR,
+            "energy", state_topic, None, prefix,
+        ),
+        SW3518Sensor(
+            "本小时电量", "energy_hour_wh", UnitOfEnergy.WATT_HOUR,
+            "energy", state_topic, None, prefix,
+        ),
+        SW3518Sensor(
+            "本次会话电量", "energy_session_wh", UnitOfEnergy.WATT_HOUR,
+            "energy", state_topic, None, prefix,
         ),
     ]
     async_add_entities(sensors)
@@ -76,6 +101,7 @@ class SW3518Sensor(SensorEntity):
         state_topic: str,
         conv: Callable[[object], object] | None,
         prefix: str,
+        total: bool = False,
     ) -> None:
         self._attr_name = f"SW3518S {name}"
         self._json_key = json_key
@@ -86,6 +112,8 @@ class SW3518Sensor(SensorEntity):
         self._attr_native_value = None
         self._prefix = prefix
         self._attr_unique_id = entity_unique_id(prefix, json_key)
+        if device_class == "energy":
+            self._attr_state_class = SensorStateClass.TOTAL_INCREASING if total else SensorStateClass.TOTAL
 
     @property
     def device_info(self):
