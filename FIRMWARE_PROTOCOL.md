@@ -62,6 +62,10 @@ home/sw3518s_charger/cmd       # 订阅指令
   "temp_c": 47.5,
   "proto_name": "PD3.0-PPS",
   "output_en": true,
+  "fan_on": true,
+  "fan_enable": true,
+  "fan_on_temp": 45,
+  "fan_off_temp": 40,
   "proto_en": {"pd": true, "qc": true, "scp": true, "vooc": true, "fcp": true}
 }
 ```
@@ -77,6 +81,10 @@ home/sw3518s_charger/cmd       # 订阅指令
 | `proto_name` | string | — | `PD3.0-PPS` | 推荐 | 当前协商的快充协议名称（任意字符串，HA 原样显示） |
 | `output_en` | bool | — | `true` | ✅ | 输出开关当前状态（**必须回读真实状态**，不能只报指令） |
 | `proto_en` | object | — | 见下 | v1.0.4+ 推荐 | 各协议启用状态；缺失时 HA 协议开关保持默认值 |
+| `fan_on` | bool | — | `true` | v1.0.6+ 推荐 | 散热风扇当前是否运转（缺失时 HA 风扇温度实体仍可用） |
+| `fan_enable` | bool | — | `true` | v1.0.6+ 推荐 | 风扇自动温控开关（缺失时 number 实体可写） |
+| `fan_on_temp` | int | ℃ | `45` | v1.0.6+ 推荐 | 风扇开启温度：芯片温度 ≥ 此值启动风扇 |
+| `fan_off_temp` | int | ℃ | `40` | v1.0.6+ 推荐 | 风扇停止温度：芯片温度 ≤ 此值关闭风扇（必须 < `fan_on_temp`） |
 
 ### 3.3 `proto_en` 子字段（协议 key 对照表）
 
@@ -113,6 +121,7 @@ home/sw3518s_charger/cmd       # 订阅指令
 | `output_on` | 无 | 打开快充输出 | `{"cmd":"output_on"}` |
 | `output_off` | 无 | 关闭快充输出 | `{"cmd":"output_off"}` |
 | `set_proto` | `proto` + `enable` | 启用/禁用某快充协议 | `{"cmd":"set_proto","proto":"pd","enable":false}` |
+| `set_fan` | `enable` / `on_temp` / `off_temp` | 设置风扇自动温控开关与温度阈值（可只传部分字段） | `{"cmd":"set_fan","on_temp":50,"off_temp":45}` |
 
 ### 4.2 指令逐条说明
 
@@ -144,6 +153,21 @@ home/sw3518s_charger/cmd       # 订阅指令
 - 动作：写 SW3518S 对应协议使能位 → 下一帧 `proto_en` 中对应 key 更新为实际结果；
 - **未知 `proto` 或非法 `enable` 时应忽略并记日志，不要重启或清空状态。**
 
+**④ 设置风扇（自动温控 + 温度阈值）**
+
+```json
+{"cmd":"set_fan","enable":true}                 // 仅开/关自动温控
+{"cmd":"set_fan","on_temp":50}                  // 仅改开启温度（50℃）
+{"cmd":"set_fan","off_temp":45}                 // 仅改停止温度（45℃）
+{"cmd":"set_fan","on_temp":50,"off_temp":45}    // 同时修改
+```
+
+- `enable`（可选）：`true` 开启自动温控，`false` 关闭（关闭时风扇立即停转）；
+- `on_temp`（可选，30–70）：芯片温度 ≥ 此值启动风扇；
+- `off_temp`（可选，30–70）：芯片温度 ≤ 此值关闭风扇；
+- **约束：`off_temp` 必须 < `on_temp`**（否则拒绝并记日志，不改变现有配置）；
+- 动作：更新配置 → 下一帧 `state` 的 `fan_on_temp` / `fan_off_temp` / `fan_enable` 反映最新值。
+
 ### 4.3 固件处理流程（伪代码）
 
 ```
@@ -166,6 +190,14 @@ on_message(topic, payload):
                 sw3518.set_proto_enable(proto, enable)
             else:
                 log("bad set_proto args")
+        case "set_fan":
+            # 部分字段更新：只改提供的字段，其余保持现值
+            if "enable" in msg:    fan_enable  = msg.enable
+            if "on_temp" in msg:   fan_on_temp = clamp(msg.on_temp, 30, 70)
+            if "off_temp" in msg:  fan_off_temp = clamp(msg.off_temp, 30, 70)
+            if fan_off_temp >= fan_on_temp:
+                log("bad set_fan args: off_temp must < on_temp"); return
+            save_fan_config(fan_enable, fan_on_temp, fan_off_temp)
         default:
             log("unknown cmd: " + msg.cmd)
 
@@ -177,6 +209,10 @@ publish_state():          # 变化时或每 1s
         "temp_c":   sw3518.read_temp_c(),
         "proto_name": sw3518.read_proto_name(),   # 如 "PD3.0-PPS"
         "output_en": sw3518.read_output_en(),     # 读真实状态
+        "fan_on": fan_running,                    # 风扇当前是否运转
+        "fan_enable": fan_enable,
+        "fan_on_temp": fan_on_temp,
+        "fan_off_temp": fan_off_temp,
         "proto_en": {
             "pd": sw3518.read_proto_enable("pd"),
             "qc": sw3518.read_proto_enable("qc"),
