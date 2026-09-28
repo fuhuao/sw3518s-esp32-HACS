@@ -53,10 +53,6 @@ async def async_setup_entry(
             "current", state_topic, lambda v: float(v) / 1000, prefix,
         ),
         SW3518Sensor(
-            "输入电压", "vin_mv", UnitOfElectricPotential.VOLT,
-            "voltage", state_topic, lambda v: float(v) / 1000, prefix,
-        ),
-        SW3518Sensor(
             "输出功率", "power_w", UnitOfPower.WATT,
             "power", state_topic, None, prefix,
         ),
@@ -114,6 +110,7 @@ class SW3518Sensor(SensorEntity):
 
     @property
     def device_info(self):
+        """归属到对应序号设备卡片（多模块自动区分）."""
         return {
             "identifiers": {device_identifier(self._prefix)},
             "name": device_name(self._prefix),

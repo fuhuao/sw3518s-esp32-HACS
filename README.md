@@ -5,7 +5,7 @@
 ![iot_class](https://img.shields.io/badge/iot_class-local_push-blue)
 ![HA](https://img.shields.io/badge/Home%20Assistant-2024.4%2B-green)
 ![hacs](https://img.shields.io/badge/HACS-1.30.0-orange)
-![version](https://img.shields.io/badge/version-v1.0.8-blue)
+![version](https://img.shields.io/badge/version-v1.0.9-blue)
 
 ---
 
@@ -17,6 +17,7 @@
 - **远程控制**：一键开关快充输出（HA 下发 MQTT 指令 → ESP32-S3 → SW3518S）
 - **统一设备卡片**：所有实体自动归属到同一个「SW3518S PD快充充电器」设备下
 - **多模块自动发现**：接入多个 SW3518S 模块时，只要 ESP32 按 `{前缀}/N` 上报，HA 自动创建对应设备，无需手动添加（v1.0.5+）
+- **散热风扇温控**：独立设定「开启温度 / 停止温度」双阈值（number 实体，30–70℃），芯片升温到开启温度自动启动风扇、降温到停止温度自动关闭，需固件 v1.0.6+
 - **图形化配置**：添加集成时只需填写 MQTT 主题前缀，无需手写 YAML
 - **HACS 支持**：可通过自定义仓库一键安装与升级
 
@@ -97,6 +98,10 @@
   "temp_c": 47.5,
   "proto_name": "PD3.0-PPS",
   "output_en": true,
+  "fan_on": true,
+  "fan_enable": true,
+  "fan_on_temp": 45,
+  "fan_off_temp": 40,
   "proto_en": {"pd": true, "qc": true, "scp": true, "vooc": true, "fcp": true}
 }
 ```
@@ -109,6 +114,10 @@
 | `temp_c` | float | ℃ | 芯片温度 |
 | `proto_name` | string | — | 快充协议名称（如 PD3.0-PPS / SCP / VOOC） |
 | `output_en` | bool | — | 输出开关状态 |
+| `fan_on` | bool | — | 风扇当前是否运转 |
+| `fan_enable` | bool | — | 风扇自动温控开关 |
+| `fan_on_temp` | int | ℃ | 风扇开启温度（芯片温度 ≥ 此值启动） |
+| `fan_off_temp` | int | ℃ | 风扇停止温度（芯片温度 ≤ 此值关闭，须 < `fan_on_temp`） |
 | `proto_en` | object | — | 各协议启用状态：`pd`/`qc`/`scp`/`vooc`/`fcp` 对应布尔值 |
 
 ### 控制指令 JSON
@@ -118,9 +127,12 @@
 {"cmd":"output_off"}
 {"cmd":"set_proto","proto":"pd","enable":true}
 {"cmd":"set_proto","proto":"qc","enable":false}
+{"cmd":"set_fan","on_temp":50,"off_temp":45}
 ```
 
 > `set_proto` 的 `proto` 取值：`pd` / `qc` / `scp` / `vooc` / `fcp`。
+
+> `set_fan` 支持部分字段：`enable`（开关温控）、`on_temp`（开启温度）、`off_temp`（停止温度），可只传需要修改的字段；`off_temp` 必须小于 `on_temp`。
 
 > 推荐使用 ESP-IDF / Arduino 编写固件，驱动库可参考 `h1_SW35xx`（开源 SW3518S I2C 驱动）。
 
@@ -169,6 +181,8 @@
 | SW3518S SCP协议 | switch | — | — |
 | SW3518S VOOC协议 | switch | — | — |
 | SW3518S FCP协议 | switch | — | — |
+| SW3518S 风扇开启温度 | number | ℃ | — |
+| SW3518S 风扇停止温度 | number | ℃ | — |
 
 > 说明：「协商快充协议」为文本型 sensor（无单位），显示当前 PD/QC/SCP 等协议名称；协议开关用于启用/禁用对应快充协议，需固件实现 `set_proto` 指令。
 
@@ -185,6 +199,12 @@
 ---
 
 ## 📜 更新日志
+
+### v1.0.9（2026-09-28）
+
+- 新增：**散热风扇双阈值温控** —— 可独立设定「开启温度 / 停止温度」（30–70℃ number 实体，`set_fan` 指令下发，`off_temp` 须小于 `on_temp`）
+- 新增：`number` 平台 —— 实体「SW3518S 风扇开启温度」「SW3518S 风扇停止温度」，实时回显固件当前阈值
+- 协议文档：`FIRMWARE_PROTOCOL.md` 补充 `fan_on` / `fan_enable` / `fan_on_temp` / `fan_off_temp` 状态字段与 `set_fan` 指令约定（需固件 v1.0.6+）
 
 ### v1.0.8（2026-09-15）
 

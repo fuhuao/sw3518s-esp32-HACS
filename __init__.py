@@ -12,7 +12,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor", "switch"]
+PLATFORMS = ["sensor", "switch", "number"]
 
 # hass.data[DOMAIN] 内部键（不会与 entry.entry_id 冲突）
 _DISCOVERY_UNSUBS = "_discovery_unsubs"
