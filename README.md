@@ -5,7 +5,7 @@
 ![iot_class](https://img.shields.io/badge/iot_class-local_push-blue)
 ![HA](https://img.shields.io/badge/Home%20Assistant-2024.4%2B-green)
 ![hacs](https://img.shields.io/badge/HACS-1.30.0-orange)
-![version](https://img.shields.io/badge/version-v1.0.9-blue)
+![version](https://img.shields.io/badge/version-v1.2.0-blue)
 
 ---
 
@@ -200,7 +200,7 @@
 
 ## 📜 更新日志
 
-### v1.0.9（2026-09-28）
+### v1.2.0（2026-09-28）
 
 - 新增：**散热风扇双阈值温控** —— 可独立设定「开启温度 / 停止温度」（30–70℃ number 实体，`set_fan` 指令下发，`off_temp` 须小于 `on_temp`）
 - 新增：`number` 平台 —— 实体「SW3518S 风扇开启温度」「SW3518S 风扇停止温度」，实时回显固件当前阈值
