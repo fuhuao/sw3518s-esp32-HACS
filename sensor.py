@@ -1,4 +1,4 @@
-"""SW3518S 传感器实体（输出电压/电流/功率/芯片温度/快充协议/电量统计）."""
+"""SW3518S 传感器实体（输出电压/电流/功率/芯片温度/快充协议）."""
 from __future__ import annotations
 
 import json
@@ -6,7 +6,7 @@ import logging
 from typing import Callable
 
 from homeassistant.components import mqtt
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     UnitOfElectricCurrent,
@@ -64,20 +64,28 @@ async def async_setup_entry(
             "协商快充协议", "proto_name", None, None, state_topic, None, prefix,
         ),
         SW3518Sensor(
+            "风扇运行状态", "fan_on", None, None, state_topic,
+            lambda v: "运行中" if v else "已停止", prefix,
+        ),
+        SW3518Sensor(
             "总累计电量", "energy_total_wh", UnitOfEnergy.WATT_HOUR,
             "energy", state_topic, None, prefix,
+            SensorStateClass.TOTAL_INCREASING,
         ),
         SW3518Sensor(
             "今日电量", "energy_today_wh", UnitOfEnergy.WATT_HOUR,
             "energy", state_topic, None, prefix,
+            SensorStateClass.TOTAL,
         ),
         SW3518Sensor(
             "本小时电量", "energy_hour_wh", UnitOfEnergy.WATT_HOUR,
             "energy", state_topic, None, prefix,
+            SensorStateClass.TOTAL,
         ),
         SW3518Sensor(
             "本次会话电量", "energy_session_wh", UnitOfEnergy.WATT_HOUR,
             "energy", state_topic, None, prefix,
+            SensorStateClass.TOTAL,
         ),
     ]
     async_add_entities(sensors)
@@ -97,11 +105,13 @@ class SW3518Sensor(SensorEntity):
         state_topic: str,
         conv: Callable[[object], object] | None,
         prefix: str,
+        state_class: SensorStateClass | None = None,
     ) -> None:
         self._attr_name = f"SW3518S {name}"
         self._json_key = json_key
         self._attr_native_unit_of_measurement = unit
         self._attr_device_class = device_class
+        self._attr_state_class = state_class
         self._state_topic = state_topic
         self._conv = conv or (lambda x: x)
         self._attr_native_value = None
