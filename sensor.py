@@ -43,22 +43,27 @@ async def async_setup_entry(
         SW3518Sensor(
             "输出电压", "vout_mv", UnitOfElectricPotential.VOLT,
             "voltage", state_topic, lambda v: float(v) / 1000, prefix,
+            SensorStateClass.MEASUREMENT,
         ),
         SW3518Sensor(
             "C口电流", "iout_c_ma", UnitOfElectricCurrent.AMPERE,
             "current", state_topic, lambda v: float(v) / 1000, prefix,
+            SensorStateClass.MEASUREMENT,
         ),
         SW3518Sensor(
             "A口电流", "iout_a_ma", UnitOfElectricCurrent.AMPERE,
             "current", state_topic, lambda v: float(v) / 1000, prefix,
+            SensorStateClass.MEASUREMENT,
         ),
         SW3518Sensor(
             "输出功率", "power_w", UnitOfPower.WATT,
             "power", state_topic, None, prefix,
+            SensorStateClass.MEASUREMENT,
         ),
         SW3518Sensor(
             "芯片温度", "temp_c", UnitOfTemperature.CELSIUS,
             "temperature", state_topic, None, prefix,
+            SensorStateClass.MEASUREMENT,
         ),
         SW3518Sensor(
             "协商快充协议", "proto_name", None, None, state_topic, None, prefix,

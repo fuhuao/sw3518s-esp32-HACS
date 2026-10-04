@@ -3,7 +3,7 @@
 ![iot_class](https://img.shields.io/badge/iot_class-local_push-blue)
 ![HA](https://img.shields.io/badge/Home%20Assistant-2024.4%2B-green)
 ![hacs](https://img.shields.io/badge/HACS-1.30.0-orange)
-![version](https://img.shields.io/badge/version-v1.2.1-blue)
+![version](https://img.shields.io/badge/version-v1.2.2-blue)
 ---
 ## ✨ 功能特性
 - **实时监控**：输出电压、输出电流、输出功率、芯片温度（1s 刷新，MQTT 推送）
@@ -13,7 +13,7 @@
 - **统一设备卡片**：所有实体自动归属到同一个「SW3518S PD快充充电器」设备下
 - **多模块自动发现**：接入多个 SW3518S 模块时，只要 ESP32 按 `{前缀}/N` 上报，HA 自动创建对应设备，无需手动添加（v1.0.5+）
 - **散热风扇温控**：独立设定「开启温度 / 停止温度」双阈值（number 实体，30–70℃），芯片升温到开启温度自动启动风扇、降温到停止温度自动关闭，需固件 v1.0.6+
-- **能源页支持**：累计电量实体带 `state_class`，可直接在 HA 能源页（Energy Dashboard）添加统计（v1.2.1+）
+- **能源页支持**：累计电量实体带 `state_class`，可直接在 HA 能源页（Energy Dashboard）添加统计；输出功率等实时实体带 `state_class=measurement`，可添加为能源页「设备功耗」（v1.2.2+）
 - **图形化配置**：添加集成时只需填写 MQTT 主题前缀，无需手写 YAML
 - **HACS 支持**：可通过自定义仓库一键安装与升级
 > ⚠️ 能力边界：PD 的 9V/12V/20V 电压档位由 **SW3518S 硬件与手机 CC 引脚协商**决定，本集成只能读取协商结果、开关输出，**不能由 HA 强制指定电压档位**。
@@ -150,6 +150,8 @@
 > 作者发布新版本流程：修改代码推送 GitHub → 创建新 Release（tag 递增，如 `v1.0.4`）→ HACS 即提示更新。
 ---
 ## 📜 更新日志
+### v1.2.2（2026-10-04）
+- 新增：输出功率、输出电压、C口/A口电流、芯片温度实体补充 `state_class=measurement` —— 现在可在 HA 能源页「设备功耗」中直接添加「SW3518S 输出功率」，能源页自动实时统计功率
 ### v1.2.1（2026-10-01）
 - 修复：能量传感器补充 `state_class` —— 总累计电量 `total_increasing`、今日/小时/会话电量 `total`
 - 新增：**HA 能源页支持** —— 现在可在 设置→仪表盘→能源 直接添加「SW3518S 总累计电量」等累计实体进行能耗统计
@@ -219,6 +221,7 @@ automation:
 | 协议开关无效 | 确认 ESP32 固件实现了 `set_proto` 指令并在 `state` 上报 `proto_en`；不同充电器可能不支持全部协议 |
 | 第二个模块没出现 | 确认它发布到 `home/sw3518s_charger/2/state`（`{基前缀}/N/state`），重启 HA 或等自动发现广播；检查 HA 日志是否提示「自动发现新模块」 |
 | 能源页添加不到累计电量 | 需要 v1.2.1+（能量实体带 `state_class`）；升级后重新加载集成 |
+| 能源页「设备功耗」选不到输出功率 | 需要 v1.2.2+（实时实体带 `state_class=measurement`）；升级后重新加载集成 |
 | 想指定 9V/12V/20V | 不支持。PD 电压由 SW3518S 硬件与手机协商决定 |
 ---
 ## ⚠️ 免责声明
