@@ -1,4 +1,4 @@
-"""SW3518S 开关实体（快充输出总开关 + 协议启用开关，MQTT 下发指令给 ESP32）."""
+"""SW3518S 开关实体（模块输出总开关 + 协议启用开关，MQTT 下发指令给 ESP32）."""
 from __future__ import annotations
 
 import json
@@ -41,7 +41,8 @@ async def async_setup_entry(
     state_topic = f"{prefix}/state"
     cmd_topic = f"{prefix}/cmd"
     switches = [
-        SW3518Switch("快充输出总开关", "output_en", state_topic, cmd_topic, prefix)
+        SW3518Switch("模块输出总开关", "output_en", state_topic, cmd_topic, prefix),
+        SW3518ScreenRotateSwitch("屏幕旋转", state_topic, cmd_topic, prefix),
     ]
     switches.extend(
         SW3518ProtoSwitch(name, key, state_topic, cmd_topic, prefix)
@@ -154,4 +155,59 @@ class SW3518ProtoSwitch(SwitchEntity):
         await mqtt.async_publish(
             self.hass, self._cmd_topic,
             json.dumps({"cmd": "set_proto", "proto": self._proto_key, "enable": False}),
+        )
+
+
+class SW3518ScreenRotateSwitch(SwitchEntity):
+    """屏幕旋转 180° 开关，监听状态主题、通过命令主题控制 ESP32 显示方向."""
+
+    _attr_should_poll = False
+
+    def __init__(
+        self, name: str, state_topic: str, cmd_topic: str, prefix: str
+    ) -> None:
+        self._attr_name = f"SW3518S {name}"
+        self._state_topic = state_topic
+        self._cmd_topic = cmd_topic
+        self._attr_is_on = False  # 默认正常方向
+        self._prefix = prefix
+        self._attr_unique_id = entity_unique_id(prefix, "screen_rotate")
+
+    @property
+    def device_info(self):
+        """归属到对应序号设备卡片（多模块自动区分）."""
+        return {
+            "identifiers": {device_identifier(self._prefix)},
+            "name": device_name(self._prefix),
+            "manufacturer": DEVICE_MANUFACTURER,
+            "model": DEVICE_MODEL,
+        }
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        await mqtt.async_subscribe(self.hass, self._state_topic, self._message_received)
+
+    @callback
+    def _message_received(self, msg):
+        try:
+            payload = json.loads(msg.payload)
+        except (ValueError, TypeError):
+            _LOGGER.warning("SW3518S 收到无效 JSON payload: %s", msg.payload)
+            return
+        if "screen_rotate" in payload:
+            self._attr_is_on = bool(payload["screen_rotate"])
+            self.async_write_ha_state()
+
+    async def async_turn_on(self, **kwargs):
+        """屏幕旋转 180°."""
+        await mqtt.async_publish(
+            self.hass, self._cmd_topic,
+            json.dumps({"cmd": "set_screen_rotate", "rotate": True}),
+        )
+
+    async def async_turn_off(self, **kwargs):
+        """恢复正常方向."""
+        await mqtt.async_publish(
+            self.hass, self._cmd_topic,
+            json.dumps({"cmd": "set_screen_rotate", "rotate": False}),
         )
