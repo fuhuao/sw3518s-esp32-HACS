@@ -3,7 +3,7 @@
 ![iot_class](https://img.shields.io/badge/iot_class-local_push-blue)
 ![HA](https://img.shields.io/badge/Home%20Assistant-2024.4%2B-green)
 ![hacs](https://img.shields.io/badge/HACS-1.30.0-orange)
-![version](https://img.shields.io/badge/version-v1.2.2-blue)
+![version](https://img.shields.io/badge/version-v1.2.3-blue)
 ---
 ## ✨ 功能特性
 - **实时监控**：输出电压、输出电流、输出功率、芯片温度（1s 刷新，MQTT 推送）
@@ -14,6 +14,7 @@
 - **多模块自动发现**：接入多个 SW3518S 模块时，只要 ESP32 按 `{前缀}/N` 上报，HA 自动创建对应设备，无需手动添加（v1.0.5+）
 - **散热风扇温控**：独立设定「开启温度 / 停止温度」双阈值（number 实体，30–70℃），芯片升温到开启温度自动启动风扇、降温到停止温度自动关闭，需固件 v1.0.6+
 - **能源页支持**：累计电量实体带 `state_class`，可直接在 HA 能源页（Energy Dashboard）添加统计；输出功率等实时实体带 `state_class=measurement`，可添加为能源页「设备功耗」（v1.2.2+）
+- **屏幕旋转**：新增「SW3518S 屏幕旋转」开关实体（switch），可远程将模块显示屏旋转 180°（适合倒装安装），需固件支持（v1.2.3+）
 - **图形化配置**：添加集成时只需填写 MQTT 主题前缀，无需手写 YAML
 - **HACS 支持**：可通过自定义仓库一键安装与升级
 > ⚠️ 能力边界：PD 的 9V/12V/20V 电压档位由 **SW3518S 硬件与手机 CC 引脚协商**决定，本集成只能读取协商结果、开关输出，**不能由 HA 强制指定电压档位**。
@@ -134,6 +135,7 @@
 | SW3518S 本小时电量 | sensor | Wh | energy |
 | SW3518S 本次会话电量 | sensor | Wh | energy |
 | SW3518S 快充输出总开关 | switch | — | — |
+| SW3518S 屏幕旋转 | switch | — | — |
 | SW3518S PD协议 | switch | — | — |
 | SW3518S QC协议 | switch | — | — |
 | SW3518S SCP协议 | switch | — | — |
@@ -150,6 +152,8 @@
 > 作者发布新版本流程：修改代码推送 GitHub → 创建新 Release（tag 递增，如 `v1.0.4`）→ HACS 即提示更新。
 ---
 ## 📜 更新日志
+### v1.2.3（2026-10-07）
+- 新增：**屏幕旋转开关** —— 「SW3518S 屏幕旋转」switch 实体，可远程将模块显示屏旋转 180°（`set_screen_rotate` 指令，状态 `screen_rotate` 回显；需固件支持）
 ### v1.2.2（2026-10-04）
 - 新增：输出功率、输出电压、C口/A口电流、芯片温度实体补充 `state_class=measurement` —— 现在可在 HA 能源页「设备功耗」中直接添加「SW3518S 输出功率」，能源页自动实时统计功率
 ### v1.2.1（2026-10-01）
