@@ -1,4 +1,4 @@
-"""SW3518S 传感器实体（输出电压/电流/功率/芯片温度/快充协议/电量统计）."""
+"""SW3518S 传感器实体（输出电压/电流/功率/芯片温度/快充协议）."""
 from __future__ import annotations
 
 import json
@@ -6,7 +6,7 @@ import logging
 from typing import Callable
 
 from homeassistant.components import mqtt
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     UnitOfElectricCurrent,
@@ -43,45 +43,60 @@ async def async_setup_entry(
         SW3518Sensor(
             "输出电压", "vout_mv", UnitOfElectricPotential.VOLT,
             "voltage", state_topic, lambda v: float(v) / 1000, prefix,
+            SensorStateClass.MEASUREMENT, "mdi:flash-outline",
         ),
         SW3518Sensor(
             "C口电流", "iout_c_ma", UnitOfElectricCurrent.AMPERE,
             "current", state_topic, lambda v: float(v) / 1000, prefix,
+            SensorStateClass.MEASUREMENT, "mdi:current-ac",
         ),
         SW3518Sensor(
             "A口电流", "iout_a_ma", UnitOfElectricCurrent.AMPERE,
             "current", state_topic, lambda v: float(v) / 1000, prefix,
+            SensorStateClass.MEASUREMENT, "mdi:current-ac",
         ),
         SW3518Sensor(
             "输出功率", "power_w", UnitOfPower.WATT,
             "power", state_topic, None, prefix,
+            SensorStateClass.MEASUREMENT, "mdi:transmission-tower",
         ),
         SW3518Sensor(
             "芯片温度", "temp_c", UnitOfTemperature.CELSIUS,
             "temperature", state_topic, None, prefix,
+            SensorStateClass.MEASUREMENT, "mdi:thermometer",
         ),
         SW3518Sensor(
             "协商快充协议", "proto_name", None, None, state_topic, None, prefix,
+            None, "mdi:usb",
         ),
         SW3518Sensor(
             "风扇运行状态", "fan_on", None, None, state_topic,
             lambda v: "运行中" if v else "已停止", prefix,
+            None, "mdi:fan",
+        ),
+        SW3518Sensor(
+            "风扇转速", "fan_pct", "%", None, state_topic, None, prefix,
+            SensorStateClass.MEASUREMENT, "mdi:fan",
         ),
         SW3518Sensor(
             "总累计电量", "energy_total_wh", UnitOfEnergy.WATT_HOUR,
             "energy", state_topic, None, prefix,
+            SensorStateClass.TOTAL_INCREASING, "mdi:counter",
         ),
         SW3518Sensor(
             "今日电量", "energy_today_wh", UnitOfEnergy.WATT_HOUR,
             "energy", state_topic, None, prefix,
+            SensorStateClass.TOTAL, "mdi:calendar-today",
         ),
         SW3518Sensor(
             "本小时电量", "energy_hour_wh", UnitOfEnergy.WATT_HOUR,
             "energy", state_topic, None, prefix,
+            SensorStateClass.TOTAL, "mdi:clock-outline",
         ),
         SW3518Sensor(
             "本次会话电量", "energy_session_wh", UnitOfEnergy.WATT_HOUR,
             "energy", state_topic, None, prefix,
+            SensorStateClass.TOTAL, "mdi:history",
         ),
     ]
     async_add_entities(sensors)
@@ -101,11 +116,15 @@ class SW3518Sensor(SensorEntity):
         state_topic: str,
         conv: Callable[[object], object] | None,
         prefix: str,
+        state_class: SensorStateClass | None = None,
+        icon: str | None = None,
     ) -> None:
         self._attr_name = f"SW3518S {name}"
         self._json_key = json_key
         self._attr_native_unit_of_measurement = unit
         self._attr_device_class = device_class
+        self._attr_state_class = state_class
+        self._attr_icon = icon
         self._state_topic = state_topic
         self._conv = conv or (lambda x: x)
         self._attr_native_value = None
@@ -114,7 +133,7 @@ class SW3518Sensor(SensorEntity):
 
     @property
     def device_info(self):
-        """归属到对应序号设备卡片（多模块自动区分）."""
+        """归属到对应序号设备卡片（多模块自动区分)."""
         return {
             "identifiers": {device_identifier(self._prefix)},
             "name": device_name(self._prefix),
